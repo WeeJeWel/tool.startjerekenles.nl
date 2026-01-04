@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
   <title>Oefenbladsommen Generator</title>
   <style>
-    html, body {
+    html,
+    body {
       font-family: Arial, sans-serif;
       font-size: 16px;
       margin: 0;
@@ -13,18 +18,41 @@
       background: #fff;
       color: #222;
     }
+
     .container {
       max-width: 1100px;
       margin: 0 auto;
       padding: 32px 24px 24px 24px;
       position: relative;
     }
+
     .top-bar {
       display: flex;
+      align-items: center;
       justify-content: flex-end;
       gap: 12px;
       margin-bottom: 16px;
+      flex-wrap: wrap;
     }
+
+    .page-count-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: auto;
+      font-size: 16px;
+    }
+
+    .page-count-input {
+      width: 64px;
+      font-size: 16px;
+      padding: 2px 6px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
     .top-bar button {
       font-size: 16px;
       padding: 6px 18px;
@@ -34,13 +62,16 @@
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
+
     .top-bar button:hover {
       background: #e0e0e0;
     }
+
     .top-bar button:active {
       background: #d0d0d0;
       color: #333;
     }
+
     .naam-field {
       margin-bottom: 24px;
       font-size: 16px;
@@ -49,11 +80,16 @@
       align-items: center;
       gap: 8px;
     }
+    .naam-field--spacer {
+      visibility: hidden;
+    }
+
     .naam-label {
       font-size: 16px;
       font-weight: normal;
       letter-spacing: 0.5px;
     }
+
     .naam-dots {
       min-width: 320px;
       height: 1.2em;
@@ -63,9 +99,11 @@
       font-size: 16px;
       color: #222;
     }
+
     .rij-section:not(:last-child) {
       margin-bottom: 36px;
     }
+
     .rij-title {
       font-size: 16px;
       font-weight: bold;
@@ -74,12 +112,14 @@
       user-select: none;
       display: block;
     }
+
     .rij-form {
       display: flex;
       gap: 8px;
       margin-bottom: 12px;
       align-items: center;
     }
+
     .rij-form input[type="text"],
     .rij-form select {
       width: 70px;
@@ -90,6 +130,7 @@
       box-sizing: border-box;
       font-family: inherit;
     }
+
     .rij-form label {
       display: flex;
       align-items: center;
@@ -98,11 +139,13 @@
       font-weight: normal;
       cursor: pointer;
     }
+
     .rij-form input[type="checkbox"] {
       width: 16px;
       height: 16px;
       margin-right: 2px;
     }
+
     .rij-form button {
       font-size: 16px;
       padding: 4px 14px;
@@ -112,13 +155,16 @@
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
+
     .rij-form button:hover {
       background: #e0e0e0;
     }
+
     .rij-form button:active {
       background: #d0d0d0;
       color: #333;
     }
+
     .sommen-table {
       width: 100%;
       border-collapse: separate;
@@ -126,6 +172,7 @@
       table-layout: fixed;
       margin-bottom: 0;
     }
+
     .sommen-table td {
       padding: 0 0 0 0;
       font-size: 16px;
@@ -134,50 +181,87 @@
       height: 1.7em;
       letter-spacing: 1px;
     }
+
     .sommen-table tr {
       height: 1.7em;
     }
+
     .sommen-col {
       width: 25%;
       padding: 0 8px;
     }
+
+    .page {
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+    }
+
+    .page:last-child {
+      margin-bottom: 0;
+    }
+
     @media print {
-      body, html {
+
+      body,
+      html {
         background: #fff !important;
         color: #222 !important;
       }
-      .top-bar, .rij-form, .rij-title {
+
+      .top-bar,
+      .rij-form,
+      .rij-title {
         display: none !important;
       }
+
+      .page {
+        page-break-after: always;
+      }
+
+      .page:last-child {
+        page-break-after: auto;
+      }
+
       .container {
         padding: 0 0 0 0 !important;
         margin: 0 !important;
         max-width: none !important;
       }
+
       .naam-field {
         margin-top: 0;
         margin-bottom: 18px;
       }
+
       .rij-section {
         margin-bottom: 32px;
       }
+
       .sommen-table td {
         font-size: 16px !important;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="top-bar">
-      <button id="printBtn" type="button">Printen</button>
-      <button id="regenAllBtn" type="button">Regenereer Alles</button>
+      <label class="page-count-control">Aantal pagina's:
+        <input
+          id="pageCountInput"
+          class="page-count-input"
+          type="number"
+          min="1"
+          value="1"
+        >
+      </label>
+      <button
+        id="printBtn"
+        type="button"
+      >Printen</button>
     </div>
-    <div class="naam-field">
-      <span class="naam-label">Naam:</span>
-      <span class="naam-dots">..............................</span>
-    </div>
-    <div id="rijContainer"></div>
+    <div id="pagesWrapper"></div>
   </div>
   <script>
     // Utility functions
@@ -213,7 +297,7 @@
     }
     // Generate a single sum, returns {n1, n2, op, answer}
     function generateSum(opts) {
-      const {n1List, n2List, op, answerList, voorkomTiental, voorkomRest} = opts;
+      const { n1List, n2List, op, answerList, voorkomTiental, voorkomRest } = opts;
       let tries = 0;
       while (tries < 1000) {
         let n1 = randomFrom(n1List);
@@ -273,7 +357,7 @@
         if (op === '÷' && n2 === 0) valid = false;
         if (op === '-' && answer < 0) valid = false;
         if (op !== '÷' && typeof answer !== 'undefined' && answerList && answerList.length && !answerList.includes(answer)) valid = false;
-        if (valid) return {n1, n2, op, answer};
+        if (valid) return { n1, n2, op, answer };
         tries++;
       }
       return null;
@@ -299,32 +383,79 @@
     }
     // Section defaults
     const sectionDefaults = [
-      {op: '+', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
-      {op: '-', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
-      {op: '×', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
-      {op: '÷', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
-      {op: '+', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
+      { op: '+', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true },
+      { op: '-', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true },
+      { op: '×', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true },
+      { op: '÷', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true },
+      { op: '+', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true },
     ];
     // Operator options
     const opOptions = [
-      {value: '+', label: '+'},
-      {value: '-', label: '-'},
-      {value: '×', label: '×'},
-      {value: '÷', label: '÷'},
+      { value: '+', label: '+' },
+      { value: '-', label: '-' },
+      { value: '×', label: '×' },
+      { value: '÷', label: '÷' },
     ];
-    // Render all sections
-    function renderSections() {
-      const rijContainer = document.getElementById('rijContainer');
-      rijContainer.innerHTML = '';
-      for (let i = 0; i < 5; i++) {
-        rijContainer.appendChild(renderSection(i));
+    const DEFAULT_PAGE_COUNT = 1;
+    let currentPageCount = DEFAULT_PAGE_COUNT;
+    window.pageStates = window.pageStates || [];
+    function cloneSectionDefaults() {
+      return sectionDefaults.map(def => ({ ...def }));
+    }
+    function ensurePageState(pageIdx) {
+      if (!window.pageStates[pageIdx]) {
+        window.pageStates[pageIdx] = cloneSectionDefaults();
       }
     }
+    function getSectionState(pageIdx, idx) {
+      ensurePageState(pageIdx);
+      return window.pageStates[pageIdx][idx];
+    }
+    function renderPages() {
+      const pagesWrapper = document.getElementById('pagesWrapper');
+      if (!pagesWrapper) return;
+      pagesWrapper.innerHTML = '';
+      for (let pageIdx = 0; pageIdx < currentPageCount; pageIdx++) {
+        ensurePageState(pageIdx);
+        pagesWrapper.appendChild(renderPage(pageIdx));
+      }
+      if (window.pageStates.length > currentPageCount) {
+        window.pageStates.length = currentPageCount;
+      }
+    }
+    function renderPage(pageIdx) {
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'page';
+      pageDiv.id = `page-${pageIdx}`;
+      const naamField = document.createElement('div');
+      naamField.className = 'naam-field';
+      if (pageIdx > 0) {
+        naamField.classList.add('naam-field--spacer');
+        naamField.setAttribute('aria-hidden', 'true');
+      }
+      const naamLabel = document.createElement('span');
+      naamLabel.className = 'naam-label';
+      naamLabel.textContent = 'Naam:';
+      const naamDots = document.createElement('span');
+      naamDots.className = 'naam-dots';
+      naamDots.textContent = '..............................';
+      naamField.appendChild(naamLabel);
+      naamField.appendChild(naamDots);
+      pageDiv.appendChild(naamField);
+      const rijContainer = document.createElement('div');
+      rijContainer.className = 'rij-container';
+      rijContainer.id = `rijContainer-${pageIdx}`;
+      for (let i = 0; i < sectionDefaults.length; i++) {
+        rijContainer.appendChild(renderSection(pageIdx, i));
+      }
+      pageDiv.appendChild(rijContainer);
+      return pageDiv;
+    }
     // Render a single section
-    function renderSection(idx) {
+    function renderSection(pageIdx, idx) {
       const sectionDiv = document.createElement('div');
       sectionDiv.className = 'rij-section';
-      sectionDiv.id = `rij-section-${idx}`;
+      sectionDiv.id = `rij-section-${pageIdx}-${idx}`;
       // Title
       const title = document.createElement('span');
       title.className = 'rij-title';
@@ -335,10 +466,8 @@
       form.className = 'rij-form';
       form.autocomplete = 'off';
       form.onsubmit = e => { e.preventDefault(); };
-      // Get defaults
-      const def = sectionDefaults[idx];
       // Get from local state if present
-      const state = window.rijStates && window.rijStates[idx] ? window.rijStates[idx] : def;
+      const state = getSectionState(pageIdx, idx);
       // Getal 1
       const n1Input = document.createElement('input');
       n1Input.type = 'text';
@@ -361,6 +490,11 @@
       n2Input.placeholder = 'Getal 2';
       n2Input.value = state.n2;
       n2Input.style.width = '70px';
+      const equalsSpan = document.createElement('span');
+      equalsSpan.textContent = '=';
+      equalsSpan.style.display = 'inline-block';
+      equalsSpan.style.minWidth = '16px';
+      equalsSpan.style.textAlign = 'center';
       // Antwoord
       const answerInput = document.createElement('input');
       answerInput.type = 'text';
@@ -381,12 +515,8 @@
       voorkomRestInput.checked = !!state.voorkomRest;
       voorkomRestLabel.appendChild(voorkomRestInput);
       voorkomRestLabel.appendChild(document.createTextNode('Voorkom rest'));
-      // Generate button
-      const genBtn = document.createElement('button');
-      genBtn.type = 'button';
-      genBtn.textContent = 'Genereer';
-      genBtn.onclick = () => {
-        saveSectionState(idx, {
+      const updateSection = () => {
+        saveSectionState(pageIdx, idx, {
           n1: n1Input.value,
           n2: n2Input.value,
           op: opSelect.value,
@@ -394,46 +524,54 @@
           voorkomTiental: voorkomTientalInput.checked,
           voorkomRest: voorkomRestInput.checked
         });
-        renderSumsTable(idx);
+        renderSumsTable(pageIdx, idx);
       };
       // Add fields to form (no labels)
       form.appendChild(n1Input);
       form.appendChild(opSelect);
       form.appendChild(n2Input);
+      form.appendChild(equalsSpan);
       form.appendChild(answerInput);
       form.appendChild(voorkomTientalLabel);
       form.appendChild(voorkomRestLabel);
-      form.appendChild(genBtn);
       sectionDiv.appendChild(form);
+      const inputElements = [n1Input, opSelect, n2Input, answerInput];
+      inputElements.forEach(el => {
+        el.addEventListener('input', updateSection);
+        el.addEventListener('change', updateSection);
+      });
+      [voorkomTientalInput, voorkomRestInput].forEach(el => {
+        el.addEventListener('change', updateSection);
+      });
       // Sums table
       const table = document.createElement('table');
       table.className = 'sommen-table';
-      table.id = `sommen-table-${idx}`;
+      table.id = `sommen-table-${pageIdx}-${idx}`;
       sectionDiv.appendChild(table);
       // Initial render
-      setTimeout(() => renderSumsTable(idx), 0);
+      setTimeout(() => renderSumsTable(pageIdx, idx), 0);
       return sectionDiv;
     }
     // Save section state
-    function saveSectionState(idx, state) {
-      if (!window.rijStates) window.rijStates = [...sectionDefaults];
-      window.rijStates[idx] = state;
+    function saveSectionState(pageIdx, idx, state) {
+      ensurePageState(pageIdx);
+      window.pageStates[pageIdx][idx] = state;
     }
     // Render sums table for a section
-    function renderSumsTable(idx) {
-      const table = document.getElementById(`sommen-table-${idx}`);
+    function renderSumsTable(pageIdx, idx) {
+      const table = document.getElementById(`sommen-table-${pageIdx}-${idx}`);
       if (!table) return;
       // Get state
-      const state = window.rijStates && window.rijStates[idx] ? window.rijStates[idx] : sectionDefaults[idx];
+      const state = getSectionState(pageIdx, idx);
       // Parse values
-      const n1List = parseNumberList(state.n1, Array.from({length: 10}, (_, i) => i+1));
-      const n2List = parseNumberList(state.n2, Array.from({length: 10}, (_, i) => i+1));
-      const answerList = parseAnswerList(state.answer, Array.from({length: 11}, (_, i) => i));
+      const n1List = parseNumberList(state.n1, Array.from({ length: 10 }, (_, i) => i + 1));
+      const n2List = parseNumberList(state.n2, Array.from({ length: 10 }, (_, i) => i + 1));
+      const answerList = parseAnswerList(state.answer, Array.from({ length: 11 }, (_, i) => i));
       const op = state.op;
       const voorkomTiental = !!state.voorkomTiental;
       const voorkomRest = !!state.voorkomRest;
       // Generate sums
-      const sums = generateSums({n1List, n2List, op, answerList, voorkomTiental, voorkomRest});
+      const sums = generateSums({ n1List, n2List, op, answerList, voorkomTiental, voorkomRest });
       // Render as 4 columns, 5 rows per column
       table.innerHTML = '';
       for (let row = 0; row < 5; row++) {
@@ -453,24 +591,33 @@
         table.appendChild(tr);
       }
     }
-    // Regenerate all
-    function regenerateAll() {
-      for (let i = 0; i < 5; i++) {
-        renderSumsTable(i);
+    function updatePageCount(value) {
+      const parsed = parseInt(value, 10);
+      if (isNaN(parsed) || parsed < 1) {
+        const input = document.getElementById('pageCountInput');
+        if (input) input.value = currentPageCount;
+        return;
       }
+      if (parsed === currentPageCount) return;
+      currentPageCount = parsed;
+      renderPages();
     }
     // Print
-    document.addEventListener('DOMContentLoaded', function() {
-      renderSections();
+    document.addEventListener('DOMContentLoaded', function () {
+      renderPages();
+      const pageCountInput = document.getElementById('pageCountInput');
+      if (pageCountInput) {
+        pageCountInput.value = currentPageCount;
+        pageCountInput.addEventListener('change', (event) => {
+          updatePageCount(event.target.value);
+        });
+      }
       // Print button
-      document.getElementById('printBtn').onclick = function() {
+      document.getElementById('printBtn').onclick = function () {
         window.print();
-      };
-      // Regenerate all
-      document.getElementById('regenAllBtn').onclick = function() {
-        regenerateAll();
       };
     });
   </script>
 </body>
+
 </html>

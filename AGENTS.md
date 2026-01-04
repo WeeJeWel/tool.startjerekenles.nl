@@ -1,0 +1,1 @@
+This tool generates A4 papers for elementary school students to learn math.
