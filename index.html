@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oefenbladsommen Generator</title>
+  <style>
+    html, body {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #222;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 24px 24px;
+      position: relative;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .top-bar button {
+      font-size: 16px;
+      padding: 6px 18px;
+      border: 1px solid #888;
+      background: #f5f5f5;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .top-bar button:hover {
+      background: #e0e0e0;
+    }
+    .top-bar button:active {
+      background: #d0d0d0;
+      color: #333;
+    }
+    .naam-field {
+      margin-bottom: 24px;
+      font-size: 16px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 8px;
+    }
+    .naam-label {
+      font-size: 16px;
+      font-weight: normal;
+      letter-spacing: 0.5px;
+    }
+    .naam-dots {
+      min-width: 320px;
+      height: 1.2em;
+      display: inline-block;
+      margin-left: 8px;
+      letter-spacing: 2px;
+      font-size: 16px;
+      color: #222;
+    }
+    .rij-section:not(:last-child) {
+      margin-bottom: 36px;
+    }
+    .rij-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #888;
+      user-select: none;
+      display: block;
+    }
+    .rij-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .rij-form input[type="text"],
+    .rij-form select {
+      width: 70px;
+      font-size: 16px;
+      padding: 2px 6px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .rij-form label {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 16px;
+      font-weight: normal;
+      cursor: pointer;
+    }
+    .rij-form input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin-right: 2px;
+    }
+    .rij-form button {
+      font-size: 16px;
+      padding: 4px 14px;
+      border: 1px solid #888;
+      background: #f5f5f5;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .rij-form button:hover {
+      background: #e0e0e0;
+    }
+    .rij-form button:active {
+      background: #d0d0d0;
+      color: #333;
+    }
+    .sommen-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 2px;
+      table-layout: fixed;
+      margin-bottom: 0;
+    }
+    .sommen-table td {
+      padding: 0 0 0 0;
+      font-size: 16px;
+      text-align: left;
+      vertical-align: middle;
+      height: 1.7em;
+      letter-spacing: 1px;
+    }
+    .sommen-table tr {
+      height: 1.7em;
+    }
+    .sommen-col {
+      width: 25%;
+      padding: 0 8px;
+    }
+    @media print {
+      body, html {
+        background: #fff !important;
+        color: #222 !important;
+      }
+      .top-bar, .rij-form, .rij-title {
+        display: none !important;
+      }
+      .container {
+        padding: 0 0 0 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+      }
+      .naam-field {
+        margin-top: 0;
+        margin-bottom: 18px;
+      }
+      .rij-section {
+        margin-bottom: 32px;
+      }
+      .sommen-table td {
+        font-size: 16px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <button id="printBtn" type="button">Printen</button>
+      <button id="regenAllBtn" type="button">Regenereer Alles</button>
+    </div>
+    <div class="naam-field">
+      <span class="naam-label">Naam:</span>
+      <span class="naam-dots">..............................</span>
+    </div>
+    <div id="rijContainer"></div>
+  </div>
+  <script>
+    // Utility functions
+    function parseNumberList(str, defaultRange) {
+      str = (str || '').replace(/\s+/g, '');
+      if (!str) return defaultRange;
+      let result = [];
+      for (const part of str.split(',')) {
+        if (part.includes('-')) {
+          const [start, end] = part.split('-').map(Number);
+          if (!isNaN(start) && !isNaN(end)) {
+            for (let i = start; i <= end; i++) result.push(i);
+          }
+        } else {
+          const n = Number(part);
+          if (!isNaN(n)) result.push(n);
+        }
+      }
+      return result.length ? result : defaultRange;
+    }
+    function parseAnswerList(str, defaultRange) {
+      return parseNumberList(str, defaultRange);
+    }
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+    // Generate a single sum, returns {n1, n2, op, answer}
+    function generateSum(opts) {
+      const {n1List, n2List, op, answerList, voorkomTiental, voorkomRest} = opts;
+      let tries = 0;
+      while (tries < 1000) {
+        let n1 = randomFrom(n1List);
+        let n2 = randomFrom(n2List);
+        let answer, valid = true;
+        if (op === '÷') {
+          // Ensure n1 >= n2 for division
+          if (n1 < n2) {
+            [n1, n2] = [n2, n1];
+          }
+        }
+        if (op === '+') {
+          answer = n1 + n2;
+          if (voorkomTiental) {
+            const n1s = n1.toString().split('').reverse();
+            const n2s = n2.toString().split('').reverse();
+            for (let i = 0; i < Math.max(n1s.length, n2s.length); i++) {
+              const d1 = Number(n1s[i] || 0);
+              const d2 = Number(n2s[i] || 0);
+              if (d1 + d2 > 10) { valid = false; break; }
+            }
+          }
+        } else if (op === '-') {
+          answer = n1 - n2;
+          if (answer < 0) valid = false;
+          if (voorkomTiental) {
+            const n1s = n1.toString().split('').reverse();
+            const n2s = n2.toString().split('').reverse();
+            for (let i = 0; i < Math.max(n1s.length, n2s.length); i++) {
+              const d1 = Number(n1s[i] || 0);
+              const d2 = Number(n2s[i] || 0);
+              if (d1 - d2 < 0) { valid = false; break; }
+            }
+          }
+        } else if (op === '×') {
+          answer = n1 * n2;
+        } else if (op === '÷') {
+          if (n2 === 0) { valid = false; }
+          else {
+            answer = n1 / n2;
+            if (voorkomRest) {
+              // Only allow if division is exact (no remainder)
+              if (!Number.isInteger(answer)) valid = false;
+            }
+            // If answerList is set, check both integer and remainder answers
+            if (answerList && answerList.length) {
+              if (voorkomRest) {
+                // Only integer answers allowed
+                if (!answerList.includes(answer)) valid = false;
+              } else {
+                // Allow any division, but check if integer part or remainder is in answerList
+                // (for compatibility, skip this check if not needed)
+              }
+            }
+          }
+        }
+        if (op === '÷' && n2 === 0) valid = false;
+        if (op === '-' && answer < 0) valid = false;
+        if (op !== '÷' && typeof answer !== 'undefined' && answerList && answerList.length && !answerList.includes(answer)) valid = false;
+        if (valid) return {n1, n2, op, answer};
+        tries++;
+      }
+      return null;
+    }
+    // Generate 20 sums for a section
+    function generateSums(opts) {
+      const sums = [];
+      let attempts = 0;
+      while (sums.length < 20 && attempts < 2000) {
+        const sum = generateSum(opts);
+        if (sum && !sums.some(s => s.n1 === sum.n1 && s.n2 === sum.n2 && s.op === sum.op)) {
+          sums.push(sum);
+        }
+        attempts++;
+      }
+      // If not enough unique, fill with repeats
+      while (sums.length < 20) {
+        const sum = generateSum(opts);
+        if (sum) sums.push(sum);
+        else break;
+      }
+      return sums;
+    }
+    // Section defaults
+    const sectionDefaults = [
+      {op: '+', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
+      {op: '-', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
+      {op: '×', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
+      {op: '÷', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
+      {op: '+', n1: '1-10', n2: '1-10', answer: '0-10', voorkomTiental: false, voorkomRest: true},
+    ];
+    // Operator options
+    const opOptions = [
+      {value: '+', label: '+'},
+      {value: '-', label: '-'},
+      {value: '×', label: '×'},
+      {value: '÷', label: '÷'},
+    ];
+    // Render all sections
+    function renderSections() {
+      const rijContainer = document.getElementById('rijContainer');
+      rijContainer.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        rijContainer.appendChild(renderSection(i));
+      }
+    }
+    // Render a single section
+    function renderSection(idx) {
+      const sectionDiv = document.createElement('div');
+      sectionDiv.className = 'rij-section';
+      sectionDiv.id = `rij-section-${idx}`;
+      // Title
+      const title = document.createElement('span');
+      title.className = 'rij-title';
+      title.textContent = `Rij ${idx + 1}`;
+      sectionDiv.appendChild(title);
+      // Form
+      const form = document.createElement('form');
+      form.className = 'rij-form';
+      form.autocomplete = 'off';
+      form.onsubmit = e => { e.preventDefault(); };
+      // Get defaults
+      const def = sectionDefaults[idx];
+      // Get from local state if present
+      const state = window.rijStates && window.rijStates[idx] ? window.rijStates[idx] : def;
+      // Getal 1
+      const n1Input = document.createElement('input');
+      n1Input.type = 'text';
+      n1Input.placeholder = 'Getal 1';
+      n1Input.value = state.n1;
+      n1Input.style.width = '70px';
+      // Operator
+      const opSelect = document.createElement('select');
+      opOptions.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt.value;
+        o.textContent = opt.label;
+        if (state.op === opt.value) o.selected = true;
+        opSelect.appendChild(o);
+      });
+      opSelect.style.width = '70px';
+      // Getal 2
+      const n2Input = document.createElement('input');
+      n2Input.type = 'text';
+      n2Input.placeholder = 'Getal 2';
+      n2Input.value = state.n2;
+      n2Input.style.width = '70px';
+      // Antwoord
+      const answerInput = document.createElement('input');
+      answerInput.type = 'text';
+      answerInput.placeholder = 'Antwoord';
+      answerInput.value = state.answer;
+      answerInput.style.width = '70px';
+      // Voorkom Tiental Overschrijding
+      const voorkomTientalLabel = document.createElement('label');
+      const voorkomTientalInput = document.createElement('input');
+      voorkomTientalInput.type = 'checkbox';
+      voorkomTientalInput.checked = !!state.voorkomTiental;
+      voorkomTientalLabel.appendChild(voorkomTientalInput);
+      voorkomTientalLabel.appendChild(document.createTextNode('Voorkom Tiental Overschrijding'));
+      // Voorkom rest
+      const voorkomRestLabel = document.createElement('label');
+      const voorkomRestInput = document.createElement('input');
+      voorkomRestInput.type = 'checkbox';
+      voorkomRestInput.checked = !!state.voorkomRest;
+      voorkomRestLabel.appendChild(voorkomRestInput);
+      voorkomRestLabel.appendChild(document.createTextNode('Voorkom rest'));
+      // Generate button
+      const genBtn = document.createElement('button');
+      genBtn.type = 'button';
+      genBtn.textContent = 'Genereer';
+      genBtn.onclick = () => {
+        saveSectionState(idx, {
+          n1: n1Input.value,
+          n2: n2Input.value,
+          op: opSelect.value,
+          answer: answerInput.value,
+          voorkomTiental: voorkomTientalInput.checked,
+          voorkomRest: voorkomRestInput.checked
+        });
+        renderSumsTable(idx);
+      };
+      // Add fields to form (no labels)
+      form.appendChild(n1Input);
+      form.appendChild(opSelect);
+      form.appendChild(n2Input);
+      form.appendChild(answerInput);
+      form.appendChild(voorkomTientalLabel);
+      form.appendChild(voorkomRestLabel);
+      form.appendChild(genBtn);
+      sectionDiv.appendChild(form);
+      // Sums table
+      const table = document.createElement('table');
+      table.className = 'sommen-table';
+      table.id = `sommen-table-${idx}`;
+      sectionDiv.appendChild(table);
+      // Initial render
+      setTimeout(() => renderSumsTable(idx), 0);
+      return sectionDiv;
+    }
+    // Save section state
+    function saveSectionState(idx, state) {
+      if (!window.rijStates) window.rijStates = [...sectionDefaults];
+      window.rijStates[idx] = state;
+    }
+    // Render sums table for a section
+    function renderSumsTable(idx) {
+      const table = document.getElementById(`sommen-table-${idx}`);
+      if (!table) return;
+      // Get state
+      const state = window.rijStates && window.rijStates[idx] ? window.rijStates[idx] : sectionDefaults[idx];
+      // Parse values
+      const n1List = parseNumberList(state.n1, Array.from({length: 10}, (_, i) => i+1));
+      const n2List = parseNumberList(state.n2, Array.from({length: 10}, (_, i) => i+1));
+      const answerList = parseAnswerList(state.answer, Array.from({length: 11}, (_, i) => i));
+      const op = state.op;
+      const voorkomTiental = !!state.voorkomTiental;
+      const voorkomRest = !!state.voorkomRest;
+      // Generate sums
+      const sums = generateSums({n1List, n2List, op, answerList, voorkomTiental, voorkomRest});
+      // Render as 4 columns, 5 rows per column
+      table.innerHTML = '';
+      for (let row = 0; row < 5; row++) {
+        const tr = document.createElement('tr');
+        for (let col = 0; col < 4; col++) {
+          const idxSum = col * 5 + row;
+          const sum = sums[idxSum];
+          const td = document.createElement('td');
+          td.className = 'sommen-col';
+          if (sum) {
+            td.innerHTML = `<span style="display:inline-block; min-width:32px; text-align:center;">${sum.n1}</span> <span style="display:inline-block; min-width:16px; text-align:center;">${sum.op}</span> <span style="display:inline-block; min-width:32px; text-align:center;">${sum.n2}</span> <span style="display:inline-block; min-width:16px; text-align:center;">=</span> <span style="display:inline-block; min-width:36px; text-align:left;">...</span>`;
+          } else {
+            td.innerHTML = '';
+          }
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+    }
+    // Regenerate all
+    function regenerateAll() {
+      for (let i = 0; i < 5; i++) {
+        renderSumsTable(i);
+      }
+    }
+    // Print
+    document.addEventListener('DOMContentLoaded', function() {
+      renderSections();
+      // Print button
+      document.getElementById('printBtn').onclick = function() {
+        window.print();
+      };
+      // Regenerate all
+      document.getElementById('regenAllBtn').onclick = function() {
+        regenerateAll();
+      };
+    });
+  </script>
+</body>
+</html>
