@@ -237,7 +237,6 @@
       }
 
       .page {
-        page-break-after: always;
         width: auto !important;
         min-height: 0 !important;
         margin: 0 !important;
@@ -245,12 +244,22 @@
         box-shadow: none !important;
       }
 
-      .page:last-child {
+      .page-preview {
+        padding: 15mm 0 0 5mm !important;
+        box-sizing: border-box;
+        break-after: page;
+        page-break-after: always;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .page-preview:last-child {
+        break-after: auto;
         page-break-after: auto;
       }
 
       .container {
-        padding: 15mm 0 0 5mm !important;
+        padding: 0 !important;
         margin: 0 !important;
         max-width: none !important;
       }
