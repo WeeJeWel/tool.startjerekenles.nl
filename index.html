@@ -73,35 +73,6 @@
       color: #333;
     }
 
-    .naam-field {
-      margin-bottom: 24px;
-      font-size: 16px;
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .naam-field--spacer {
-      visibility: hidden;
-    }
-
-    .naam-label {
-      font-size: 16px;
-      font-weight: normal;
-      letter-spacing: 0.5px;
-    }
-
-    .naam-dots {
-      min-width: 320px;
-      height: 1.2em;
-      display: inline-block;
-      margin-left: 8px;
-      letter-spacing: 2px;
-      font-size: 16px;
-      color: #222;
-    }
-
     .rij-section:not(:last-child) {
       margin-bottom: 36px;
     }
@@ -182,6 +153,7 @@
       vertical-align: middle;
       height: 1.7em;
       letter-spacing: 1px;
+      white-space: nowrap;
     }
 
     .sommen-table tr {
@@ -193,6 +165,11 @@
       padding: 0 8px;
     }
 
+    .answer-value--printed {
+      color: #d00;
+      font-weight: bold;
+    }
+
     .page {
       margin-bottom: 48px;
       padding-bottom: 24px;
@@ -200,6 +177,49 @@
 
     .page:last-child {
       margin-bottom: 0;
+    }
+
+    .page-title {
+      display: none;
+    }
+
+    @media screen {
+      body {
+        background: #f2f3f5;
+      }
+
+      .container {
+        max-width: none;
+      }
+
+      .top-bar,
+      .page-preview {
+        width: 900px;
+        max-width: calc(100vw - 48px);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .page-preview:not(:last-child) {
+        margin-bottom: 72px;
+      }
+
+      .page-title {
+        display: block;
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: bold;
+        color: #555;
+      }
+
+      .page {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 12mm 14mm 8mm 14mm;
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+      }
     }
 
     @media print {
@@ -212,12 +232,18 @@
 
       .top-bar,
       .rij-form,
-      .rij-title {
+      .rij-title,
+      .page-title {
         display: none !important;
       }
 
       .page {
         page-break-after: always;
+        width: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
       }
 
       .page:last-child {
@@ -230,17 +256,16 @@
         max-width: none !important;
       }
 
-      .naam-field {
-        margin-top: 0;
-        margin-bottom: 18px;
-      }
-
       .rij-section {
         margin-bottom: 32px;
       }
 
       .sommen-table td {
         font-size: 16px !important;
+      }
+
+      .answer-value--printed {
+        color: #d00 !important;
       }
     }
   </style>
@@ -261,7 +286,11 @@
       <button
         id="printBtn"
         type="button"
-      >Printen</button>
+      >Print Opgaven</button>
+      <button
+        id="printAnswersBtn"
+        type="button"
+      >Print Antwoorden</button>
     </div>
     <div id="pagesWrapper"></div>
   </div>
@@ -400,7 +429,9 @@
     ];
     const DEFAULT_PAGE_COUNT = 1;
     let currentPageCount = DEFAULT_PAGE_COUNT;
+    let printAnswers = false;
     window.pageStates = window.pageStates || [];
+    window.generatedSums = window.generatedSums || [];
     function cloneSectionDefaults() {
       return sectionDefaults.map(def => ({ ...def }));
     }
@@ -413,6 +444,9 @@
           ? clonePageState(window.pageStates[0])
           : cloneSectionDefaults();
       }
+      if (!window.generatedSums[pageIdx]) {
+        window.generatedSums[pageIdx] = [];
+      }
     }
     function getSectionState(pageIdx, idx) {
       ensurePageState(pageIdx);
@@ -424,31 +458,26 @@
       pagesWrapper.innerHTML = '';
       for (let pageIdx = 0; pageIdx < currentPageCount; pageIdx++) {
         ensurePageState(pageIdx);
-        pagesWrapper.appendChild(renderPage(pageIdx));
+        const pagePreview = document.createElement('div');
+        pagePreview.className = 'page-preview';
+        const pageTitle = document.createElement('h2');
+        pageTitle.className = 'page-title';
+        pageTitle.textContent = `Pagina ${pageIdx + 1}`;
+        pagePreview.appendChild(pageTitle);
+        pagePreview.appendChild(renderPage(pageIdx));
+        pagesWrapper.appendChild(pagePreview);
       }
       if (window.pageStates.length > currentPageCount) {
         window.pageStates.length = currentPageCount;
+      }
+      if (window.generatedSums.length > currentPageCount) {
+        window.generatedSums.length = currentPageCount;
       }
     }
     function renderPage(pageIdx) {
       const pageDiv = document.createElement('div');
       pageDiv.className = 'page';
       pageDiv.id = `page-${pageIdx}`;
-      const naamField = document.createElement('div');
-      naamField.className = 'naam-field';
-      if (pageIdx > 0) {
-        naamField.classList.add('naam-field--spacer');
-        naamField.setAttribute('aria-hidden', 'true');
-      }
-      const naamLabel = document.createElement('span');
-      naamLabel.className = 'naam-label';
-      naamLabel.textContent = 'Naam:';
-      const naamDots = document.createElement('span');
-      naamDots.className = 'naam-dots';
-      naamDots.textContent = '..............................';
-      naamField.appendChild(naamLabel);
-      naamField.appendChild(naamDots);
-      pageDiv.appendChild(naamField);
       const rijContainer = document.createElement('div');
       rijContainer.className = 'rij-container';
       rijContainer.id = `rijContainer-${pageIdx}`;
@@ -522,7 +551,11 @@
       voorkomRestInput.checked = !!state.voorkomRest;
       voorkomRestLabel.appendChild(voorkomRestInput);
       voorkomRestLabel.appendChild(document.createTextNode('Voorkom rest'));
+      const updateRestVisibility = () => {
+        voorkomRestLabel.style.display = opSelect.value === '÷' ? 'flex' : 'none';
+      };
       const updateSection = () => {
+        updateRestVisibility();
         saveSectionState(pageIdx, idx, {
           n1: n1Input.value,
           n2: n2Input.value,
@@ -531,6 +564,7 @@
           voorkomTiental: voorkomTientalInput.checked,
           voorkomRest: voorkomRestInput.checked
         });
+        clearGeneratedSums(pageIdx, idx);
         renderSumsTable(pageIdx, idx);
       };
       // Add fields to form (no labels)
@@ -541,6 +575,7 @@
       form.appendChild(answerInput);
       form.appendChild(voorkomTientalLabel);
       form.appendChild(voorkomRestLabel);
+      updateRestVisibility();
       sectionDiv.appendChild(form);
       const inputElements = [n1Input, opSelect, n2Input, answerInput];
       inputElements.forEach(el => {
@@ -568,6 +603,7 @@
           ensurePageState(i);
           window.pageStates[i][idx] = { ...state };
           syncSectionForm(i, idx, state);
+          clearGeneratedSums(i, idx);
           renderSumsTable(i, idx);
         }
       }
@@ -584,6 +620,8 @@
       if (opSelect) opSelect.value = state.op;
       if (checkboxes[0]) checkboxes[0].checked = !!state.voorkomTiental;
       if (checkboxes[1]) checkboxes[1].checked = !!state.voorkomRest;
+      const labels = section.querySelectorAll('.rij-form label');
+      if (labels[1]) labels[1].style.display = state.op === '÷' ? 'flex' : 'none';
     }
     // Render sums table for a section
     function renderSumsTable(pageIdx, idx) {
@@ -599,7 +637,12 @@
       const voorkomTiental = !!state.voorkomTiental;
       const voorkomRest = !!state.voorkomRest;
       // Generate sums
-      const sums = generateSums({ n1List, n2List, op, answerList, voorkomTiental, voorkomRest });
+      ensurePageState(pageIdx);
+      let sums = window.generatedSums[pageIdx][idx];
+      if (!sums) {
+        sums = generateSums({ n1List, n2List, op, answerList, voorkomTiental, voorkomRest });
+        window.generatedSums[pageIdx][idx] = sums;
+      }
       // Render as 4 columns, 5 rows per column
       table.innerHTML = '';
       for (let row = 0; row < 5; row++) {
@@ -610,7 +653,7 @@
           const td = document.createElement('td');
           td.className = 'sommen-col';
           if (sum) {
-            td.innerHTML = `<span style="display:inline-block; min-width:32px; text-align:center;">${sum.n1}</span> <span style="display:inline-block; min-width:16px; text-align:center;">${sum.op}</span> <span style="display:inline-block; min-width:32px; text-align:center;">${sum.n2}</span> <span style="display:inline-block; min-width:16px; text-align:center;">=</span> <span style="display:inline-block; min-width:36px; text-align:left;">...</span>`;
+            td.innerHTML = formatSumHtml(sum, voorkomRest);
           } else {
             td.innerHTML = '';
           }
@@ -618,6 +661,42 @@
         }
         table.appendChild(tr);
       }
+    }
+    function clearGeneratedSums(pageIdx, idx) {
+      ensurePageState(pageIdx);
+      window.generatedSums[pageIdx][idx] = null;
+    }
+    function formatAnswer(sum, voorkomRest) {
+      if (sum.op === '÷' && !voorkomRest) {
+        const quotient = Math.floor(sum.n1 / sum.n2);
+        const remainder = sum.n1 % sum.n2;
+        if (printAnswers) {
+          return `<span class="answer-value--printed">${quotient}</span> r <span class="answer-value--printed">${remainder}</span>`;
+        }
+        return '... r ...';
+      }
+      return printAnswers ? `<span class="answer-value--printed">${sum.answer}</span>` : '...';
+    }
+    function formatSumHtml(sum, voorkomRest) {
+      return `<span style="display:inline-block; min-width:32px; text-align:center;">${sum.n1}</span> <span style="display:inline-block; min-width:16px; text-align:center;">${sum.op}</span> <span style="display:inline-block; min-width:32px; text-align:center;">${sum.n2}</span> <span style="display:inline-block; min-width:16px; text-align:center;">=</span> <span class="answer-value" style="display:inline-block; min-width:64px; text-align:left;">${formatAnswer(sum, voorkomRest)}</span>`;
+    }
+    function renderAllSumsTables() {
+      for (let pageIdx = 0; pageIdx < currentPageCount; pageIdx++) {
+        for (let idx = 0; idx < sectionDefaults.length; idx++) {
+          renderSumsTable(pageIdx, idx);
+        }
+      }
+    }
+    function printWithAnswers(showAnswers) {
+      printAnswers = showAnswers;
+      renderAllSumsTables();
+      if (showAnswers) {
+        window.addEventListener('afterprint', function restorePreviewAfterPrint() {
+          printAnswers = false;
+          renderAllSumsTables();
+        }, { once: true });
+      }
+      window.print();
     }
     function updatePageCount(value) {
       const parsed = parseInt(value, 10);
@@ -636,13 +715,19 @@
       const pageCountInput = document.getElementById('pageCountInput');
       if (pageCountInput) {
         pageCountInput.value = currentPageCount;
+        pageCountInput.addEventListener('input', (event) => {
+          updatePageCount(event.target.value);
+        });
         pageCountInput.addEventListener('change', (event) => {
           updatePageCount(event.target.value);
         });
       }
-      // Print button
+      // Print buttons
       document.getElementById('printBtn').onclick = function () {
-        window.print();
+        printWithAnswers(false);
+      };
+      document.getElementById('printAnswersBtn').onclick = function () {
+        printWithAnswers(true);
       };
     });
   </script>
