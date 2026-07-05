@@ -389,18 +389,20 @@
           if (n2 === 0) { valid = false; }
           else {
             answer = n1 / n2;
+            const quotient = Math.floor(answer);
             if (voorkomRest) {
               // Only allow if division is exact (no remainder)
               if (!Number.isInteger(answer)) valid = false;
             }
-            // If answerList is set, check both integer and remainder answers
+            // If answerList is set, the visible answer may not exceed the configured answer range.
             if (answerList && answerList.length) {
               if (voorkomRest) {
                 // Only integer answers allowed
                 if (!answerList.includes(answer)) valid = false;
               } else {
-                // Allow any division, but check if integer part or remainder is in answerList
-                // (for compatibility, skip this check if not needed)
+                // With remainders, pupils write the integer quotient and remainder.
+                // Keep the quotient within the allowed answer values as well.
+                if (!answerList.includes(quotient)) valid = false;
               }
             }
           }
